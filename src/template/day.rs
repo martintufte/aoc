@@ -18,7 +18,7 @@ const SERVER_UTC_OFFSET: i32 = -5;
 /// let day = Day::new(8).unwrap();
 /// assert_eq!(day.to_string(), "08")
 /// ```
-/// #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Day(u8);
 
 impl Day {
