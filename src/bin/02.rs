@@ -36,8 +36,39 @@ pub fn part_one(input: &str) -> Option<u64> {
     Some(count)
 }
 
-pub fn part_two(_input: &str) -> Option<u64> {
-    None
+pub fn part_two(input: &str) -> Option<u64> {
+    let mut count: u64 = 0;
+
+    // Loop over all ids, and check if they are invalid
+    for line in input.trim().split(',') {
+        let ranges: Vec<&str> = line.split('-').collect();
+        assert!(ranges.len() == 2);
+
+        let lower_range: u64 = ranges[0].parse().unwrap();
+        let upper_range: u64 = ranges[1].parse().unwrap();
+
+        for n in lower_range..=upper_range {
+            // Convert back to string
+            let initial_string = n.to_string();
+            let length = initial_string.len();
+
+            for k in 1 .. length {
+                // Filter not divisible numbers
+                if length % k != 0 {
+                    continue
+                }
+
+                // Check if repeated reference equals initial string
+                let subset: &str = &initial_string[.. k];
+                if subset.repeat(length / k) == initial_string {
+                    count += n;
+                    break;
+                }
+            }
+        }
+    }
+
+    Some(count)
 }
 
 #[cfg(test)]
@@ -53,6 +84,6 @@ mod tests {
     #[test]
     fn test_part_two() {
         let result = part_two(&aoc::template::read_file("examples", DAY));
-        assert_eq!(result, None);
+        assert_eq!(result, Some(4174379265));
     }
 }
