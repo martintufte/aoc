@@ -1,51 +1,43 @@
-use std::char;
-
 aoc::solution!(4);
 
 pub fn part_one(input: &str) -> Option<u64> {
-    // Use a count array
-    // Combine input into a single trimmed string
-    let trimmed: &str = input.trim();
-    let contigous_input = trimmed.replace("\n", "");
-    let n_cols = trimmed.lines().next().unwrap().len();
-    let n_rows = contigous_input.len() / n_cols;
+    // Trim input and count number of columns and rows
+    let input= input.trim();
+    let n_cols = input.lines().next()?.len();
+    let n_rows = input.lines().count();
 
     println!("n_cols {n_cols}");
     println!("n_rows {n_rows}");
 
-    fn locate_in_contiguous(string: &str, row: usize, col: usize, n_cols: usize) -> Option<char> {
-        string.chars().nth(row * n_cols + col)
-    }
+    // Create a grid of chars, filtering out newlines
+    let grid: Vec<u8> = input.bytes().filter(|&b| b != b'\n').collect();
 
     let mut n_paper_rolls: u64 = 0;
     
     // Loop over each character. Count number of neighbours
-    for (i, ch) in contigous_input.chars().enumerate() {
-        if ch == '@' {
-            let row = i / n_cols;
-            let col = i % n_cols;
-            let mut n_neighbors: u64 = 0;
+    for idx in 0..grid.len() {
+        if grid[idx] != b'@' {
+            continue
+        }
+        let row = idx / n_cols;
+        let col = idx % n_cols;
+        let mut n_neighbors: u64 = 0;
 
-            // Limit neighbor search to boundary
-            let min_neighbor_row = if row == 0 {0} else {row - 1};
-            let max_neighbor_row = if row == n_rows - 1 {n_rows - 1} else {row + 1};
-            let min_neighbor_col = if col == 0 {0} else {col - 1};
-            let max_neighbor_col = if col == n_cols - 1 {n_cols - 1} else {col + 1};
+        // Check 3x3 neighborhood
+        for dr in [-1isize, 0, 1] {
+            for dc in [-1isize, 0, 1] {
+                let r = row as isize + dr;
+                let c = col as isize + dc;
 
-            for i in min_neighbor_row..=max_neighbor_row {
-                for j in min_neighbor_col..=max_neighbor_col {
-                    match locate_in_contiguous(&contigous_input, i, j, n_cols) {
-                        Some(ch) if ch == '@' => {
-                            n_neighbors += 1;
-                        },
-                        Some(_) => {},
-                        None => {},
-                    }
+                if r >= 0 && r < n_rows as isize && c >= 0 && c < n_cols as isize {
+                    let nidx = (r as usize) * n_cols + (c as usize);
+                    n_neighbors += (grid[nidx] == b'@') as u64;
                 }
             }
-            if n_neighbors < 5 {  // less than 5 neighbors as self is counted
-                n_paper_rolls += 1;
-            }
+        }
+
+        if n_neighbors < 5 {  // less than 5 neighbors as self is counted
+            n_paper_rolls += 1;
         }
     }
 
