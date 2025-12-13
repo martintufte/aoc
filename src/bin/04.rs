@@ -1,3 +1,5 @@
+use std::{collections::HashSet, hash::Hash};
+
 aoc::solution!(4);
 
 pub fn part_one(input: &str) -> Option<u64> {
@@ -44,8 +46,97 @@ pub fn part_one(input: &str) -> Option<u64> {
     Some(n_paper_rolls)
 }
 
-pub fn part_two(_input: &str) -> Option<u64> {
-    None
+pub fn part_two(input: &str) -> Option<u64> {
+    // Trim input and count number of columns and rows
+    let input= input.trim();
+    let n_cols = input.lines().next()?.len();
+    let n_rows = input.lines().count();
+
+    println!("n_cols {n_cols}");
+    println!("n_rows {n_rows}");
+
+    // Create a grid of chars, filtering out newlines
+    let grid: Vec<u8> = input.bytes().filter(|&b| b != b'\n').collect();
+
+    // Store the number of neighbors in a grid
+    let mut neighbors_grid: Vec<u8> = vec![0u8; grid.len()];
+    let mut current_removed: HashSet<usize> = HashSet::new();
+
+    // First loop: Loop over each character. Count number of neighbours
+    for idx in 0..grid.len() {
+        if grid[idx] != b'@' {
+            continue
+        }
+        let row = idx / n_cols;
+        let col = idx % n_cols;
+        let mut n_neighbors: u64 = 0;
+
+        // Check 3x3 neighborhood
+        for dr in [-1isize, 0, 1] {
+            for dc in [-1isize, 0, 1] {
+                let r = row as isize + dr;
+                let c = col as isize + dc;
+
+                if r >= 0 && r < n_rows as isize && c >= 0 && c < n_cols as isize {
+                    let nidx = (r as usize) * n_cols + (c as usize);
+                    n_neighbors += (grid[nidx] == b'@') as u64;
+                }
+            }
+        }
+
+        // Store the number of neighbors at the index
+        neighbors_grid[idx] = n_neighbors as u8;
+
+        // Insert the index of the current removed
+        if n_neighbors < 5 {  // less than 5 neighbors as self is counted
+            current_removed.insert(idx);
+        }
+    }
+
+    println!("Iteration 0, removed {:?}", current_removed);
+
+    // Keep removing rolls until no new rolls can be removed.
+    let mut newly_removed: HashSet<usize> = current_removed.clone();
+    let mut it: u8 = 0;
+
+    while ! newly_removed.is_empty() {
+        it += 1;
+        let mut removed: HashSet<usize> = HashSet::new();
+
+        for idx in newly_removed.drain() {
+            // Check removed neighbors
+            let row = idx / n_cols;
+            let col = idx % n_cols;
+
+            // Check 3x3 neighborhood
+            for dr in [-1isize, 0, 1] {
+                for dc in [-1isize, 0, 1] {
+                    let r = row as isize + dr;
+                    let c = col as isize + dc;
+
+                    if r >= 0 && r < n_rows as isize && c >= 0 && c < n_cols as isize {
+                        let nidx = (r as usize) * n_cols + (c as usize);
+                        if grid[nidx] != b'@' {
+                            continue;
+                        }
+                        neighbors_grid[nidx] -= 1;
+                        if neighbors_grid[nidx] < 5 && ! current_removed.contains(&nidx) {
+                            current_removed.insert(nidx);
+                            removed.insert(nidx);
+                        }
+                    }
+                }
+            }
+        }
+
+        // Update the newly removed indices
+        println!("Iteration {it}, removed {:?}", removed);
+        newly_removed = removed;
+    }
+
+    // Count the cardinality of the current removed rolls
+    let n_paper_rolls: u64 = current_removed.iter().len() as u64;
+    Some(n_paper_rolls)
 }
 
 #[cfg(test)]
@@ -61,6 +152,6 @@ mod tests {
     #[test]
     fn test_part_two() {
         let result = part_two(&aoc::template::read_file("examples", DAY));
-        assert_eq!(result, None);
+        assert_eq!(result, Some(43));
     }
 }
