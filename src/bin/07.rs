@@ -48,8 +48,48 @@ pub fn part_one(input: &str) -> Option<u64> {
     Some(n_splits)
 }
 
-pub fn part_two(_input: &str) -> Option<u64> {
-    None
+pub fn part_two(input: &str) -> Option<u64> {
+    // Parse lines, get line width
+    let mut it = input.trim().lines();
+
+    // Create beam mask with initial source
+    let source_line = it.next().unwrap();
+    let line_width = source_line.len();
+    let mut beam_counts: Vec<u64> = vec![0; line_width];
+    if let Some(source_idx) = source_line.find('S') {
+        beam_counts[source_idx] = 1;
+    }
+
+    // Iterate over the splitter lines
+    for line in it {
+        // Clone old beam counts
+        let mut new_beam_counts: Vec<u64> = beam_counts.clone();
+
+        // Keep track of which indices contain the splitter
+        let mut splitters: Vec<usize> = Vec::new();
+        for (idx, ch) in line.char_indices() {
+            if ch == '^' {
+                // Store splitter
+                splitters.push(idx);
+
+                // Splitter reached, keep track of all new splits
+                if beam_counts[idx] > 0 {
+                    new_beam_counts[idx - 1] += beam_counts[idx];
+                    new_beam_counts[idx + 1] += beam_counts[idx];
+                }
+            }
+        }
+
+        // Stop the beam behind the splitters
+        for idx in splitters {
+            new_beam_counts[idx] = 0;
+        }
+
+        // Update beam mask
+        beam_counts = new_beam_counts;
+    }
+
+    Some(beam_counts.iter().sum())
 }
 
 #[cfg(test)]
@@ -65,6 +105,6 @@ mod tests {
     #[test]
     fn test_part_two() {
         let result = part_two(&aoc::template::read_file("examples", DAY));
-        assert_eq!(result, None);
+        assert_eq!(result, Some(40));
     }
 }
