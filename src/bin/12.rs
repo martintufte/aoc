@@ -48,17 +48,28 @@ pub fn part_one(input: &str) -> Option<u64> {
     // println!("Presents: {:?}", presents);
     // println!("Grids: {:?}", grids);
 
-    // TODO: Pre-compute the rotated and flipped presents
+    let mut present_sizes: Vec<usize> = Vec::new();
+    for present in presents {
+        // println!("Present: {:?}", present);
+        present_sizes.push(present.iter().filter(|&&b| b).count());
+    }
 
-    // TODO: Find the number of regions that can fit the presents
+    // println!("Present size: {:?}", present_sizes);
+
     let mut n_regions: u64 = 0;
-    for (idx, (w, h, _present_idxs)) in regions.iter().enumerate() {
-        println!("Region {idx} ({w} x {h}):");
-        let mut has_solution = false;
-
-        // TODO: Put in dynamic programming solution
-        for _ in 0..1 {
-            has_solution = true;
+    for (w, h, present_idxs) in regions.iter() {
+        let mut has_solution = true;
+        
+        // Prune out regions that has not enough physical space
+        let area: u32 = w * h;
+        let mut piece_area: u32 = 0;
+        for (present_size, idx) in present_sizes.iter().zip(present_idxs) {
+            piece_area += *present_size as u32 * idx;
+        }
+        if piece_area > area {
+            has_solution = false;
+        } else {
+            // println!("Piece area: {area} / {piece_area} ({:?}%)", (piece_area as f32 / area as f32 * 100.0).round());
         }
 
         if has_solution {
